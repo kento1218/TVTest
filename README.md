@@ -1,20 +1,17 @@
-デジタル放送汎用視聴プログラム実装研究資料
-==========================================
-デジタル放送汎用視聴プログラム実装研究資料(略称 TVTest)は、パーソナルコンピュータ上において、デジタル放送の視聴を行うプログラムの実装を研究する目的で頒布される研究資料です。
+**[オリジナル](https://github.com/DBCTRADO/TVTest)**
 
-この資料は MPEG-2 TS を扱うための基本的な機能を実装しています。  
-CAS 処理は実装されていないため、一般のテレビ放送を視聴することはできません。
+ブランチについて
+-
 
+* master  
+ビルド設定の変更など、自分の作業用の変更を入れます。
+* original  
+オリジナルのmasterと同期します。
+* その他  
+適宜、細かい作業用にブランチを作る可能性があります。
 
-依存ライブラリ
---------------
-* DirectShow BaseClasses
-* [FAAD2](http://www.audiocoding.com/faad2.html)
-* [libjpeg](http://www.ijg.org/)
-* [libpng](http://libpng.org/)
-* [zlib](http://zlib.net/)
-
-
-ライセンス
-----------
-GPL v2
+pull, mergeなど
+-
+pull, cherry-pickなどはご自由にどうぞ。  
+master, work以外のブランチは突然rebaseされることがあります。  
+pull-requestはお気軽にどうぞ。
