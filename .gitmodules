@@ -1,0 +1,6 @@
+[submodule "baseclasses"]
+	path = baseclasses
+	url = git@github.com:kento1218/ds-baseclasses.git
+[submodule "faad2"]
+	path = faad2
+	url = git@github.com:kento1218/faad2.git
