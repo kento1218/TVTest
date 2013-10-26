@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <tchar.h>
-#include "libpng/png.h"
-#include "zlib/zlib.h"
+#include <png.h>
+#include <zlib.h>
 #include "TVTest_Image.h"
 #include "PNG.h"
 #include "ImageUtil.h"

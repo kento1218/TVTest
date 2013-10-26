@@ -3,8 +3,8 @@
 #include <windows.h>
 #include <tchar.h>
 extern "C" {
-#include "libjpeg\jpeglib.h"
-#include "libjpeg\jerror.h"
+#include <jpeglib.h>
+#include <jerror.h>
 }
 #include "TVTest_Image.h"
 #include "JPEG.h"
