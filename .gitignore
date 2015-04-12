@@ -1,0 +1,14 @@
+# VisualStudio files
+*.suo
+*.sdf
+*.opensdf
+*.user
+*.aps
+ipch/
+
+Thumbs.db
+
+Debug/
+Release/
+
+# Runtime
