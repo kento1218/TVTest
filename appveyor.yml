@@ -1,0 +1,26 @@
+version: 0.9.0.{build}
+branches:
+  except:
+  - /topic\/.*/
+  - original
+configuration:
+- Debug
+- Debug_XP
+- Release
+- Release_XP
+environment:
+  BASE_CLASSES_URL:
+    secure: aoYy8B0T541zQzc8iN8GeQ1IqEVi0YKPbzePTJ8R/I07c4uFi1ovamqlsdysFrJ92pz7J/6BxcJE+0Py0uSVPA==
+before_build:
+- gem install httpclient
+- ruby before-ci-build.rb
+build:
+  project: src/TVTest_All.VS2013.sln
+  parallel: true
+  verbosity: minimal
+test: off
+artifacts:
+- path: src\Win32\$(configuration)\*.dll
+- path: src\Win32\$(configuration)\*.exe
+- path: src\Win32\$(configuration)\*.pdb
+deploy: off
