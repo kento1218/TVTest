@@ -10,5 +10,9 @@ Thumbs.db
 
 Debug/
 Release/
+Debug_XP/
+Release_XP/
+Release_MD/
+Release_XP_MD/
 
 # Runtime
