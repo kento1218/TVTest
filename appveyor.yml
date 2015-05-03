@@ -1,4 +1,7 @@
 version: 0.9.0.{build}
+init:
+- ps: Set-WinSystemLocale ja-JP
+- ps: Restart-Computer
 branches:
   except:
   - /topic\/.*/
