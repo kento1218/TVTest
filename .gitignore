@@ -15,4 +15,7 @@ Release_XP/
 Release_MD/
 Release_XP_MD/
 
+/src/BaseClasses/*.cpp
+/src/BaseClasses/*.h
+
 # Runtime
