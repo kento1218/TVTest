@@ -809,8 +809,9 @@ BEGIN
 	// (サイズは変えなくてもダイアログ表示時に調整されます)
 	CTEXT L"\x00A9 デジタル放送総合技術研究開発機構\r\n\
 BonTest オリジナル作者: 拡張ツール中の人 氏\r\n\
-BonTest 改造版作者: Meru-co 氏",IDC_ABOUT_INFO,72,32,144,32,SS_OWNERDRAW
-	CTEXT "https://github.com/DBCTRADO/TVTest",IDC_ABOUT_LINK,72,64,144,8,SS_OWNERDRAW | SS_NOTIFY
+BonTest 改造版作者: Meru-co 氏\r\n\
+Build: kento1218",IDC_ABOUT_INFO,72,32,144,32,SS_OWNERDRAW
+	CTEXT "https://github.com/kento1218/TVTest",IDC_ABOUT_LINK,72,64,144,8,SS_OWNERDRAW | SS_NOTIFY
 END
 
 IDD_INITIALSETTINGS DIALOG DISCARDABLE 0,0,316,168
