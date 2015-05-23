@@ -11,12 +11,14 @@ class CTaskbarManager
 public:
 	CTaskbarManager();
 	~CTaskbarManager();
+	void SetAppID(LPCTSTR pszID);
 	bool Initialize(HWND hwnd);
 	void Finalize();
 	bool HandleMessage(UINT uMsg,WPARAM wParam,LPARAM lParam);
 	bool SetRecordingStatus(bool fRecording);
 	bool SetProgress(int Pos,int Max);
 	bool EndProgress();
+	bool ReinitializeJumpList();
 	bool UpdateJumpList();
 	bool ClearJumpList();
 
@@ -55,6 +57,7 @@ private:
 	UINT m_TaskbarButtonCreatedMessage;
 	interface ITaskbarList3 *m_pTaskbarList;
 	TVTest::String m_AppID;
+	bool m_fAppIDInvalid;
 	bool m_fJumpListInitialized;
 	std::map<DWORD,ChannelIconInfo> m_ChannelIconMap;
 
