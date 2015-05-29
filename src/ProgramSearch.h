@@ -7,6 +7,7 @@
 #include <deque>
 #include "Dialog.h"
 #include "EpgProgramList.h"
+#include "ChannelList.h"
 #include "RichEditUtil.h"
 #include "RegExp.h"
 #include "Settings.h"
@@ -239,6 +240,9 @@ public:
 	void ShowButton(int ID,bool fShow);
 	void CheckButton(int ID,bool fCheck);
 	void SetFocus(int ID);
+	void SetSearchTargetList(const LPCTSTR *ppszList,int Count);
+	bool SetSearchTarget(int Target);
+	int GetSearchTarget() const { return m_SearchTarget; }
 
 private:
 	class CKeywordEditSubclass : public CWindowSubclass
@@ -265,9 +269,20 @@ private:
 	CEventSearchOptions &m_Options;
 	CKeywordEditSubclass m_KeywordEditSubclass;
 	bool m_fGenreExpanded[16];
+	std::vector<TVTest::String> m_SearchTargetList;
+	int m_SearchTarget;
 };
 
-class CSearchEventInfo;
+class CSearchEventInfo : public CEventInfoData
+{
+public:
+	CSearchEventInfo(const CEventInfoData &EventInfo,
+					 const CTunerChannelInfo &ChannelInfo);
+	const CTunerChannelInfo &GetChannelInfo() const { return m_ChannelInfo; }
+
+protected:
+	CTunerChannelInfo m_ChannelInfo;
+};
 
 class CProgramSearchDialog
 	: public CResizableDialog
@@ -275,8 +290,13 @@ class CProgramSearchDialog
 {
 public:
 	enum {
-		MAX_KEYWORD_HISTORY=50,
-		NUM_COLUMNS=3
+		MAX_KEYWORD_HISTORY=50
+	};
+	enum {
+		COLUMN_CHANNEL,
+		COLUMN_TIME,
+		COLUMN_EVENTNAME,
+		NUM_COLUMNS
 	};
 
 	class CEventHandler
@@ -288,8 +308,8 @@ public:
 		virtual bool OnSearch() = 0;
 		virtual void OnEndSearch() {}
 		virtual bool OnClose() { return true; }
-		virtual bool OnLDoubleClick(const CEventInfoData *pEventInfo,LPARAM Param) { return false; }
-		virtual bool OnRButtonClick(const CEventInfoData *pEventInfo,LPARAM Param) { return false; }
+		virtual bool OnLDoubleClick(const CSearchEventInfo *pEventInfo) { return false; }
+		virtual bool OnRButtonClick(const CSearchEventInfo *pEventInfo) { return false; }
 		virtual void OnHighlightChange(bool fHighlight) {}
 		friend class CProgramSearchDialog;
 
@@ -297,7 +317,7 @@ public:
 		class CProgramSearchDialog *m_pSearchDialog;
 		CEventSearcher *m_pSearcher;
 
-		bool AddSearchResult(const CEventInfoData *pEventInfo,LPCTSTR pszChannelName,LPARAM Param=0);
+		bool AddSearchResult(CSearchEventInfo *pEventInfo);
 		bool Match(const CEventInfoData *pEventInfo) const;
 	};
 
@@ -315,6 +335,9 @@ public:
 	CEventSearchOptions &GetOptions() { return m_Options; }
 	void SetResultListHeight(int Height);
 	int GetResultListHeight() const { return m_ResultListHeight; }
+	void SetSearchTargetList(const LPCTSTR *ppszList,int Count);
+	bool SetSearchTarget(int Target);
+	int GetSearchTarget() const;
 
 private:
 	CEventHandler *m_pEventHandler;
@@ -336,11 +359,11 @@ private:
 	static const int MIN_PANE_HEIGHT=16;
 
 	INT_PTR DlgProc(HWND hDlg,UINT uMsg,WPARAM wParam,LPARAM lParam);
-	bool AddSearchResult(const CEventInfoData *pEventInfo,LPCTSTR pszChannelName,LPARAM Param=0);
+	bool AddSearchResult(CSearchEventInfo *pEventInfo);
 	void ClearSearchResult();
 	void SortSearchResult();
 	int FormatEventTimeText(const CEventInfoData *pEventInfo,LPTSTR pszText,int MaxLength) const;
-	int FormatEventInfoText(const CEventInfoData *pEventInfo,LPTSTR pszText,int MaxLength) const;
+	void FormatEventInfoText(const CEventInfoData *pEventInfo,TVTest::String *pText) const;
 	void HighlightKeyword();
 	bool SearchNextKeyword(LPCTSTR *ppszText,LPCTSTR pKeyword,int KeywordLength,int *pLength) const;
 	bool IsSplitterPos(int x,int y) const;
