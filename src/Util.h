@@ -170,10 +170,26 @@ class CGlobalLock
 public:
 	CGlobalLock();
 	~CGlobalLock();
-	bool Create(LPCTSTR pszName);
+	bool Create(LPCTSTR pszName,bool fInheritHandle=false);
+	bool Open(LPCTSTR pszName,
+			  DWORD DesiredAccess=MUTEX_ALL_ACCESS,
+			  bool fInheritHandle=false);
 	bool Wait(DWORD Timeout=INFINITE);
 	void Close();
 	void Release();
+};
+
+class CBasicSecurityAttributes : public SECURITY_ATTRIBUTES
+{
+public:
+	CBasicSecurityAttributes();
+	bool Initialize();
+
+private:
+	SECURITY_DESCRIPTOR m_SecurityDescriptor;
+
+	CBasicSecurityAttributes(const CBasicSecurityAttributes &) /* = delete */;
+	CBasicSecurityAttributes &operator=(const CBasicSecurityAttributes &) /* = delete */;
 };
 
 namespace Util
