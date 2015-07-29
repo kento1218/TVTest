@@ -1,4 +1,5 @@
 version: 0.9.0.{build}
+skip_tags: true
 init:
 - ps: Set-WinSystemLocale ja-JP
 - ps: Restart-Computer
@@ -25,4 +26,10 @@ after_build:
 test: off
 artifacts:
 - path: pkg\*.zip
-deploy: off
+deploy:
+  provider: GitHub
+  auth_token:
+    secure: Lc0feNQVBz/XlDiYdmGc3+yK8YSfFw5P0BgLYCbMnYpI+8Ng+NmMybdzKvDAPwYv
+  artifact: /.*\.zip/
+  draft: false
+  prerelease: false
