@@ -15,15 +15,14 @@ environment:
   BASE_CLASSES_URL:
     secure: aoYy8B0T541zQzc8iN8GeQ1IqEVi0YKPbzePTJ8R/I07c4uFi1ovamqlsdysFrJ92pz7J/6BxcJE+0Py0uSVPA==
 before_build:
-- gem install httpclient
-- ruby before-ci-build.rb
+- ps: .\tools\before-build.ps1
 build:
   project: src/TVTest_All.VS2013.sln
   parallel: true
   verbosity: minimal
+after_build:
+- ps: .\tools\after-build.ps1
 test: off
 artifacts:
-- path: src\Win32\$(configuration)\*.dll
-- path: src\Win32\$(configuration)\*.exe
-- path: src\Win32\$(configuration)\*.pdb
+- path: pkg\*.zip
 deploy: off
