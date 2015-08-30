@@ -62,7 +62,7 @@ DWORD CTsPacket::ParsePacket(BYTE *pContinuityCounter)
 	m_Header.bySyncByte					= m_pData[0];							// +0
 	m_Header.bTransportErrorIndicator	= (m_pData[1] & 0x80U) != 0;	// +1 bit7
 	m_Header.bPayloadUnitStartIndicator	= (m_pData[1] & 0x40U) != 0;	// +1 bit6
-	m_Header.TransportPriority			= (m_pData[1] & 0x20U) != 0;	// +1 bit5
+	m_Header.bTransportPriority			= (m_pData[1] & 0x20U) != 0;	// +1 bit5
 	m_Header.wPID = ((WORD)(m_pData[1] & 0x1F) << 8) | (WORD)m_pData[2];		// +1 bit4-0, +2
 	m_Header.byTransportScramblingCtrl	= (m_pData[3] & 0xC0U) >> 6;			// +3 bit7-6
 	m_Header.byAdaptationFieldCtrl		= (m_pData[3] & 0x30U) >> 4;			// +3 bit5-4
@@ -76,18 +76,12 @@ DWORD CTsPacket::ParsePacket(BYTE *pContinuityCounter)
 		m_AdaptationField.byAdaptationFieldLength = m_pData[4];							// +4
 		if (m_AdaptationField.byAdaptationFieldLength > 0) {
 			// フィールド長以降あり
-			m_AdaptationField.bDiscontinuityIndicator	= (m_pData[5] & 0x80U) != 0;	// +5 bit7
-			m_AdaptationField.bRamdomAccessIndicator	= (m_pData[5] & 0x40U) != 0;	// +5 bit6
-			m_AdaptationField.bEsPriorityIndicator		= (m_pData[5] & 0x20U) != 0;	// +5 bit5
-			m_AdaptationField.bPcrFlag					= (m_pData[5] & 0x10U) != 0;	// +5 bit4
-			m_AdaptationField.bOpcrFlag					= (m_pData[5] & 0x08U) != 0;	// +5 bit3
-			m_AdaptationField.bSplicingPointFlag		= (m_pData[5] & 0x04U) != 0;	// +5 bit2
-			m_AdaptationField.bTransportPrivateDataFlag	= (m_pData[5] & 0x02U) != 0;	// +5 bit1
-			m_AdaptationField.bAdaptationFieldExtFlag	= (m_pData[5] & 0x01U) != 0;	// +5 bit0
+			m_AdaptationField.Flags = m_pData[5];
+			m_AdaptationField.bDiscontinuityIndicator = (m_AdaptationField.Flags & ADAPTFIELD_DISCONTINUITY_INDICATOR) != 0;
 
 			if (m_AdaptationField.byAdaptationFieldLength > 1U) {
-				m_AdaptationField.pOptionData			= &m_pData[6];
 				m_AdaptationField.byOptionSize			= m_AdaptationField.byAdaptationFieldLength - 1U;
+				m_AdaptationField.pOptionData			= &m_pData[6];
 			}
 		}
 	}
@@ -162,6 +156,13 @@ const BYTE CTsPacket::GetPayloadSize(void) const
 	default :	// アダプテーションフィールドのみ or 例外
 		return 0U;
 	}
+}
+
+void CTsPacket::SetPID(WORD PID)
+{
+	m_pData[1] = (BYTE)((m_pData[1] & 0xE0) | ((PID >> 8) & 0x1F));
+	m_pData[2] = (BYTE)(PID & 0xFF);
+	m_Header.wPID = PID;
 }
 
 // バッファに書き込み
@@ -456,15 +457,18 @@ const bool CTsPidMapManager::StorePacket(const CTsPacket *pPacket)
 
 	if(wPID > 0x1FFFU)return false;					// PID範囲外
 
-	if(!m_PidMap[wPID].pMapTarget)return false;		// PIDマップターゲットなし
+	TAG_MAPTARGETITEM *pItem = m_PidMap[wPID];
 
-	if(m_PidMap[wPID].pMapTarget->StorePacket(pPacket)){
+	if (!pItem)
+		return false;		// PIDマップターゲットなし
+
+	if (pItem->pMapTarget->StorePacket(pPacket)) {
 		// ターゲットの更新があったときはコールバックを呼び出す
 
-		if(m_PidMap[wPID].pMapCallback){
-			m_PidMap[wPID].pMapCallback(wPID, m_PidMap[wPID].pMapTarget, this, m_PidMap[wPID].pMapParam);
-			}
+		if (pItem->pMapCallback) {
+			pItem->pMapCallback(wPID, pItem->pMapTarget, this, pItem->pMapParam);
 		}
+	}
 
 	return true;
 }
@@ -477,9 +481,11 @@ const bool CTsPidMapManager::MapTarget(const WORD wPID, CTsPidMapTarget *pMapTar
 	UnmapTarget(wPID);
 
 	// 新しいターゲットをマップ
-	m_PidMap[wPID].pMapTarget = pMapTarget;
-	m_PidMap[wPID].pMapCallback = pMapCallback;
-	m_PidMap[wPID].pMapParam = pMapParam;
+	TAG_MAPTARGETITEM *pItem = new TAG_MAPTARGETITEM;
+	pItem->pMapTarget = pMapTarget;
+	pItem->pMapCallback = pMapCallback;
+	pItem->pMapParam = pMapParam;
+	m_PidMap[wPID] = pItem;
 	m_wMapCount++;
 
 	pMapTarget->OnPidMapped(wPID, pMapParam);
@@ -491,14 +497,17 @@ const bool CTsPidMapManager::UnmapTarget(const WORD wPID)
 {
 	if(wPID > 0x1FFFU)return false;
 
-	if(!m_PidMap[wPID].pMapTarget)return false;
+	TAG_MAPTARGETITEM *pItem = m_PidMap[wPID];
+
+	if (!pItem)
+		return false;
 
 	// 現在のターゲットをアンマップ
-	CTsPidMapTarget *pTarget = m_PidMap[wPID].pMapTarget;
-	::ZeroMemory(&m_PidMap[wPID], sizeof(m_PidMap[wPID]));
+	m_PidMap[wPID] = NULL;
 	m_wMapCount--;
 
-	pTarget->OnPidUnmapped(wPID);
+	pItem->pMapTarget->OnPidUnmapped(wPID);
+	delete pItem;
 
 	return true;
 }
@@ -514,7 +523,15 @@ void CTsPidMapManager::UnmapAllTarget(void)
 CTsPidMapTarget * CTsPidMapManager::GetMapTarget(const WORD wPID) const
 {
 	// マップされているターゲットを返す
-	return (wPID <= 0x1FFFU)? m_PidMap[wPID].pMapTarget : NULL;
+	if (wPID > 0x1FFF)
+		return NULL;
+
+	TAG_MAPTARGETITEM *pItem = m_PidMap[wPID];
+
+	if (!pItem)
+		return NULL;
+
+	return pItem->pMapTarget;
 }
 
 const WORD CTsPidMapManager::GetMapCount(void) const
@@ -570,7 +587,7 @@ void CPsiSectionParser::StorePacket(const CTsPacket *pPacket)
 
 	BYTE byPos, bySize;
 
-	if (pPacket->m_Header.bPayloadUnitStartIndicator) {
+	if (pPacket->GetPayloadUnitStartIndicator()) {
 		// [ヘッダ断片 | ペイロード断片] + [スタッフィングバイト] + ヘッダ先頭 + [ヘッダ断片] + [ペイロード断片] + [スタッフィングバイト]
 		const BYTE byUnitStartPos = pData[0] + 1U;
 		if (byUnitStartPos >= byPayloadSize)
@@ -745,11 +762,15 @@ CTsClockRef & CTsClockRef::operator = (const CTsClockRef &Operand)
 
 const bool CTsClockRef::StorePacket(const CTsPacket *pPacket, const WORD wPcrPID)
 {
-	if(pPacket->GetPID() != wPcrPID)return false;
-	if(!pPacket->m_AdaptationField.bPcrFlag)return false;
+	if (pPacket->GetPID() != wPcrPID)
+		return false;
+	if (!pPacket->GetPcrFlag())
+		return false;
+	if (pPacket->GetOptionSize() < 6)
+		return false;
 
 	// 33bit 90KHz PCRを計算
-	const LONGLONG llCurPcrCount = GetPcrFromHex(pPacket->m_AdaptationField.pOptionData);
+	const LONGLONG llCurPcrCount = GetPcrFromHex(pPacket->GetOptionData());
 
 	if(llCurPcrCount < 0LL){
 		// PCRなし(エラー)
@@ -761,7 +782,7 @@ const bool CTsClockRef::StorePacket(const CTsPacket *pPacket, const WORD wPcrPID
 		InitPcrPll(llCurPcrCount);
 		TRACE(TEXT("PLL初期化\n"));
 		}
-	else if(pPacket->m_AdaptationField.bDiscontinuityIndicator){
+	else if(pPacket->GetDiscontinuityIndicator()){
 		// PCR PLL再同期
 		SyncPcrPll(llCurPcrCount);
 		TRACE(TEXT("PLL再同期\n"));
