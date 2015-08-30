@@ -550,8 +550,6 @@ private:
 	HWND GetViewerWindow() const override;
 	bool SetZoomRate(int Rate,int Factor) override;
 	bool GetZoomRate(int *pRate,int *pFactor) override;
-	bool SetPanAndScan(const PanAndScanInfo &Info) override;
-	bool GetPanAndScan(PanAndScanInfo *pInfo) const override;
 	bool SetLogo(HBITMAP hbm) override;
 	bool SetAlwaysOnTop(bool fTop) override;
 	bool SetFullscreen(bool fFullscreen) override;
@@ -571,6 +569,7 @@ private:
 	void OnRecordingPaused() override;
 	void OnRecordingResumed() override;
 	void On1SegModeChanged(bool f1SegMode) override;
+	void OnPanAndScanChanged() override;
 	void OnVolumeChanged(int Volume) override;
 	void OnMuteChanged(bool fMute) override;
 	void OnDualMonoModeChanged(CAudioDecFilter::DualMonoMode Mode) override;
@@ -587,11 +586,15 @@ private:
 	void OnDestroy();
 	void OnSizeChanged(UINT State,int Width,int Height);
 	bool OnSizeChanging(UINT Edge,RECT *pRect);
+	void OnGetMinMaxInfo(HWND hwnd,LPMINMAXINFO pmmi);
 	void OnMouseMove(int x,int y);
 	bool OnSetCursor(HWND hwndCursor,int HitTestCode,int MouseMessage);
+	bool OnKeyDown(WPARAM KeyCode);
 	void OnCommand(HWND hwnd,int id,HWND hwndCtl,UINT codeNotify);
+	bool OnSysCommand(UINT Command);
 	void OnTimer(HWND hwnd,UINT id);
 	bool OnInitMenuPopup(HMENU hmenu);
+	bool OnClose(HWND hwnd);
 	void OnRecordingStateChanged();
 	void OnEventChanged();
 	bool AutoFitWindowToVideo();
