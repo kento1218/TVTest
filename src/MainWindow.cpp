@@ -2639,8 +2639,24 @@ void CMainWindow::OnCommand(HWND hwnd,int id,HWND hwndCtl,UINT codeNotify)
 			if (hwndOwner==nullptr || ::IsWindowEnabled(hwndOwner)) {
 				for (int i=0;i<lengthof(m_DirectShowFilterPropertyList);i++) {
 					if (m_DirectShowFilterPropertyList[i].Command==id) {
-						m_App.CoreEngine.m_DtvEngine.m_MediaViewer.DisplayFilterProperty(
-							m_DirectShowFilterPropertyList[i].Filter,hwndOwner);
+						CMediaViewer &MediaViewer=m_App.CoreEngine.m_DtvEngine.m_MediaViewer;
+						bool fOK=false;
+
+						if (m_DirectShowFilterPropertyList[i].Filter==CMediaViewer::PROPERTY_FILTER_VIDEODECODER) {
+							IBaseFilter *pDecoder = MediaViewer.GetVideoDecoderFilter();
+							if (pDecoder!=nullptr) {
+								HRESULT hr=ShowPropertyPageFrame(pDecoder,hwndOwner,m_App.GetResourceInstance());
+								if (SUCCEEDED(hr)) {
+									MediaViewer.SaveVideoDecoderSettings();
+									fOK=true;
+								}
+								pDecoder->Release();
+							}
+						}
+
+						if (!fOK) {
+							MediaViewer.DisplayFilterProperty(m_DirectShowFilterPropertyList[i].Filter,hwndOwner);
+						}
 						break;
 					}
 				}
@@ -6036,6 +6052,7 @@ LRESULT CMainWindow::CFullscreen::OnMessage(HWND hwnd,UINT uMsg,WPARAM wParam,LP
 		ShowStatusView(false);
 		ShowSideBar(false);
 		ShowPanel(false);
+		RestorePanel();
 		return 0;
 	}
 
@@ -6224,18 +6241,27 @@ void CMainWindow::CFullscreen::ShowPanel(bool fShow)
 			else
 				m_PanelWidth=m_Panel.GetWidth();
 			m_LayoutBase.SetContainerVisible(CONTAINER_ID_PANEL,false);
-			m_Panel.SetWindow(nullptr,nullptr);
-			CPanel *pPanel=m_App.Panel.Frame.GetPanel();
-			pPanel->SetWindow(&m_App.Panel.Form,TEXT("パネル"));
-			pPanel->SendSizeMessage();
-			if (m_App.Panel.fShowPanelWindow) {
-				m_App.Panel.Frame.SetPanelVisible(true);
-			}
+			if (!m_App.Panel.IsFloating())
+				RestorePanel();
 		}
 
 		m_fShowPanel=fShow;
 
 		m_App.UICore.SetCommandCheckedState(CM_PANEL,fShow);
+	}
+}
+
+
+void CMainWindow::CFullscreen::RestorePanel()
+{
+	if (m_Panel.GetWindow()!=nullptr) {
+		m_Panel.SetWindow(nullptr,nullptr);
+		CPanel *pPanel=m_App.Panel.Frame.GetPanel();
+		pPanel->SetWindow(&m_App.Panel.Form,TEXT("パネル"));
+		pPanel->SendSizeMessage();
+		if (m_App.Panel.fShowPanelWindow) {
+			m_App.Panel.Frame.SetPanelVisible(true,true);
+		}
 	}
 }
 

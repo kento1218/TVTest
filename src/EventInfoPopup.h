@@ -7,6 +7,7 @@
 #include "DrawUtil.h"
 #include "RichEditUtil.h"
 #include "GUIUtil.h"
+#include "WindowUtil.h"
 
 
 class CEventInfoPopup : protected CCustomWindow
@@ -68,9 +69,12 @@ private:
 	TVTest::String m_TitleText;
 	TVTest::CIcon m_TitleIcon;
 	CEventHandler *m_pEventHandler;
+	bool m_fCursorInWindow;
+	bool m_fMenuShowing;
 
 	static const LPCTSTR m_pszWindowClass;
 	static HINSTANCE m_hinst;
+	static const UINT TIMER_ID_HIDE=1;
 
 // CCustomWindow
 	LRESULT OnMessage(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam) override;
@@ -84,7 +88,7 @@ private:
 	void SetNcRendering();
 };
 
-class CEventInfoPopupManager
+class CEventInfoPopupManager : protected CWindowSubclass
 {
 public:
 	class ABSTRACT_CLASS(CEventHandler)
@@ -108,16 +112,13 @@ public:
 	bool Popup(int x,int y);
 
 private:
-	static const LPCTSTR m_pszPropName;
 	CEventInfoPopup *m_pPopup;
 	bool m_fEnable;
-	HWND m_hwnd;
-	WNDPROC m_pOldWndProc;
 	CEventHandler *m_pEventHandler;
 	bool m_fTrackMouseEvent;
 	LPARAM m_HitTestParam;
 
-	static LRESULT CALLBACK HookWndProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
+	LRESULT OnMessage(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam) override;
 };
 
 
